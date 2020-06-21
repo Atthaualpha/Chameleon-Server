@@ -1,12 +1,23 @@
-const express = require('express');
+const express = require("express");
 const app = express();
+const logger = require("./server/config/logger");
+const morgan = require("morgan");
 
-require('./server/config/config');
-require('./server/config/dbConfig').connectToDB();
-app.use(require('./server/router/router'));
+app.use(morgan("dev"));
 
-app.set('port', process.env.SERVER_PORT);
+//Body parser
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-app.listen(app.get('port'), server => {
-    console.info(`Server listen on port ${app.get('port')}`);
+//db config
+require("./server/config/config");
+require("./server/config/dbConfig").connectToDB();
+
+//routes
+app.use(require("./server/router/router"));
+
+app.set("port", process.env.SERVER_PORT);
+
+app.listen(app.get("port"), (server) => {
+  logger.info(`Server listen on port ${app.get("port")}`);
 });
