@@ -18,7 +18,11 @@
   "homepage": "https://github.com/Atthaualpha/Chameleon-Server#readme",
   "dependencies": {
     "express": "^4.17.1",
-    "mongodb": "^3.5.9",
-    "nodemon": "^2.0.4"
+    "moment": "^2.27.0",
+    "mongodb": "^3.5.9",    
+    "winston": "^3.3.0"
+  },
+  "devDependencies": {
+    "morgan": "^1.10.0"
   }
 }
