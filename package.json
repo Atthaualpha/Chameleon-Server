@@ -1,6 +1,6 @@
 {
   "name": "chameleon-server",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Mock server to handle fake request",
   "main": "app.js",
   "scripts": {
@@ -19,7 +19,7 @@
   "dependencies": {
     "express": "^4.17.1",
     "moment": "^2.27.0",
-    "mongodb": "^3.5.9",    
+    "mongodb": "^3.5.9",
     "winston": "^3.3.0"
   },
   "devDependencies": {
