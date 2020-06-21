@@ -1,5 +1,5 @@
-const mongoDB = require("mongodb");
-const logger = require("./logger");
+const mongoDB = require('mongodb');
+const logger = require('./logger');
 
 let clientConnection;
 
@@ -11,11 +11,11 @@ const connectToDB = async () => {
     await clientConnection
       .connect()
       .then(() => {
-        logger.info("DB connected!!!");
+        logger.info('DB connected!!!');
       })
       .catch((err) => {
         logger.error(err);
-        throw new Error("Error connecting to DB!!!");
+        throw new Error('Error connecting to DB!!!');
       });
   }
 };

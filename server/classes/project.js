@@ -1,5 +1,5 @@
-const cnn = require("../config/dbConfig").getConnection();
-const logger = require("../config/logger");
+const cnn = require('../config/dbConfig').getConnection();
+const logger = require('../config/logger');
 
 class Project {
   #projectId;
@@ -12,7 +12,7 @@ class Project {
    */
   async createProject(name, callback) {
     try {
-      let response = await cnn.collection("project").insertOne({ name });
+      let response = await cnn.collection('project').insertOne({ name });
 
       let projectCreated = {
         id: response.insertedId,

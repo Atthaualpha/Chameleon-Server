@@ -1,7 +1,7 @@
-const { createLogger, format, transports } = require("winston");
-const moment = require("moment");
+const { createLogger, format, transports } = require('winston');
+const moment = require('moment');
 
-const tsFormat = () => moment().format("YYYY-MM-DD hh:mm:ss").trim();
+const tsFormat = () => moment().format('YYYY-MM-DD hh:mm:ss').trim();
 
 const levels = {
   error: 0,
@@ -11,10 +11,10 @@ const levels = {
 };
 
 const colors = {
-  error: "red",
-  warn: "yellow",
-  info: "blue",
-  debug: "green",
+  error: 'red',
+  warn: 'yellow',
+  info: 'blue',
+  debug: 'green',
 };
 
 const colorizer = format.colorize({ colors });
