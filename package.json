@@ -4,7 +4,8 @@
   "description": "Mock server to handle fake request",
   "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "nstart": "nodemon app.js -e js"
   },
   "repository": {
     "type": "git",
@@ -18,8 +19,10 @@
   "homepage": "https://github.com/Atthaualpha/Chameleon-Server#readme",
   "dependencies": {
     "express": "^4.17.1",
+    "lodash": "^4.17.15",
     "moment": "^2.27.0",
     "mongodb": "^3.5.9",
+    "underscore": "^1.10.2",
     "winston": "^3.3.0"
   },
   "devDependencies": {

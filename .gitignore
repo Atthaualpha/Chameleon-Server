@@ -3,3 +3,7 @@
 node_modules/
 
 .vscode/
+
+server/config/dbProperties.json
+
+server/archive/

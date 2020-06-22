@@ -1,22 +1,13 @@
-const cnn = require('../config/dbConfig').getConnection();
-const mongoDB = require('mongodb');
-const ObjectId = mongoDB.ObjectID;
+const cnn = require('../config/dbConfig');
+const mongoClient = require('../config/dbConfig').getMongoClient();
+const mongo = require('mongodb');
 const logger = require('../config/logger');
+const fileHandler = require('./files-handler');
+const _ = require('lodash');
 
 const collection = 'request';
 
 class MockRequest {
-  #id;
-  #url;
-  #queryParams;
-  #requestBody;
-  #requestHeaders;
-  #responseBody;
-  #responseHeaders;
-  #projectId;
-  #status;
-  #restMethod;
-
   /**
    *
    * @param {String} projectId
@@ -25,18 +16,47 @@ class MockRequest {
    * @returns id of new request
    */
   async createRequest(projectId, requestMock, callback) {
+    const session = mongoClient.startSession();
     try {
-      requestMock.projectId = new ObjectId(projectId);
-      let result = await cnn.collection(collection).insertOne(requestMock);
+      session.startTransaction();
+
+      let hasResponse = false;
+      let { responseBody, ...remainRequest } = requestMock;
+      if (!_.isEmpty(responseBody)) {
+        hasResponse = true;
+      }
+
+      remainRequest.hasResponse = hasResponse;
+      remainRequest.dateCreated = new Date();
+      remainRequest.projectId = new mongo.ObjectID(projectId);
+      let result = await cnn
+        .getDb()
+        .collection(collection)
+        .insertOne(remainRequest, { session });
 
       let requestDoc = {
         id: result.insertedId,
       };
 
+      if (hasResponse) {
+        await fileHandler.createResponseFile(
+          projectId,
+          requestDoc.id,
+          responseBody,
+          (err) => {
+            throw new Error(err);
+          }
+        );
+      }
+
       callback(null, requestDoc);
+      await session.commitTransaction();
     } catch (err) {
+      await session.abortTransaction();
       logger.error(err);
       callback(err);
+    } finally {
+      session.endSession();
     }
   }
 
@@ -51,8 +71,9 @@ class MockRequest {
 
     try {
       let cursor = await cnn
+        .getDb()
         .collection(collection)
-        .find({ projectId: new ObjectId(projectId) });
+        .find({ projectId: new mongo.ObjectID(projectId) });
 
       await cursor.forEach((doc) => {
         requestMocks.push(doc);
@@ -78,8 +99,9 @@ class MockRequest {
   async findRequest(requestId, callback) {
     try {
       let result = await cnn
+        .getDb()
         .collection(collection)
-        .findOne({ _id: new ObjectId(requestId) });
+        .findOne({ _id: new mongo.ObjectID(requestId) });
 
       callback(null, result);
     } catch (err) {

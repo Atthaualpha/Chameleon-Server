@@ -1,0 +1,66 @@
+const fs = require('fs');
+const fsPromises = fs.promises;
+const logger = require('../config/logger');
+const path = require('path');
+
+const _basePath = path.resolve(__dirname, '../archive');
+
+/**
+ *
+ * @param {String} projectId
+ * @param {String} requestId
+ * @param {JSON} responseData
+ * @param {Function} callback
+ */
+const createResponseFile = async (
+  projectId,
+  requestId,
+  responseData,
+  callback
+) => {
+  try {
+    if (!checkDirExists(projectId)) {
+      logger.warn('Project dir response not found, creating again');
+      await createDirResponse(projectId);
+    }
+
+    await writeResponseFile(projectId, requestId, responseData);
+  } catch (err) {
+    logger.error(err);
+    callback(err);
+  }
+};
+
+/**
+ *
+ * @param {String} projectId
+ * @returns Boolean flag true if is a dir, otherwise false
+ */
+const checkDirExists = (projectId) => {
+  return fs.existsSync(`${_basePath}/${projectId}`);
+};
+
+/**
+ *
+ * @param {String} path
+ * @param {String} requestId
+ * @param {JSON} responseData
+ */
+const writeResponseFile = (projectId, requestId, responseData) => {
+  let filePath = `${_basePath}/${projectId}/${requestId}.json`;
+
+  return fsPromises.writeFile(filePath, JSON.stringify(responseData));
+};
+
+/**
+ *
+ * @param {String} projectId
+ */
+const createDirResponse = (projectId) => {
+  return fsPromises.mkdir(`${_basePath}/${projectId}`, { recursive: true });
+};
+
+module.exports = {
+  createResponseFile,
+  createDirResponse,
+};

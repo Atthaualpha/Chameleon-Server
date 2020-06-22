@@ -1,7 +1,7 @@
-const cnn = require('../config/dbConfig').getConnection();
-const mongodb = require('mongodb');
-const ObjectId = mongodb.ObjectID;
+const cnn = require('../config/dbConfig');
+const mongo = require('mongodb');
 const logger = require('../config/logger');
+const fileHandler = require('./files-handler');
 
 class Project {
   #projectId;
@@ -14,12 +14,19 @@ class Project {
    */
   async createProject(name, callback) {
     try {
-      let response = await cnn.collection('project').insertOne({ name });
+      let response = await cnn
+        .getDb()
+        .collection('project')
+        .insertOne({ name, dateCreated: new Date() });
 
       let project = {
         id: response.insertedId,
         name,
       };
+
+      fileHandler
+        .createDirResponse(project.id)
+        .catch(() => logger.warn('Error creating project Dir'));
 
       callback(null, project);
     } catch (err) {
@@ -35,8 +42,9 @@ class Project {
   async findProject(projectId, callback) {
     try {
       let project = await cnn
+        .getDb()
         .collection('project')
-        .findOne({ _id: new ObjectId(projectId) });
+        .findOne({ _id: new mongo.ObjectID(projectId) });
 
       callback(null, project);
     } catch (err) {
@@ -52,17 +60,19 @@ class Project {
 
       if (name) {
         cursor = cnn
+          .getDb()
           .collection('project')
           .find({ name: { $regex: name, $options: 'i' } })
           .sort({ name: 1 });
       } else {
-        cursor = cnn.collection('project').find({}).sort({ name: 1 });
+        cursor = cnn.getDb().collection('project').find({}).sort({ name: 1 });
       }
 
       await cursor.forEach((doc) => {
         let project = {
           id: doc._id,
           name: doc.name,
+          dateCreated: doc.dateCreated,
         };
         projects.push(project);
       });

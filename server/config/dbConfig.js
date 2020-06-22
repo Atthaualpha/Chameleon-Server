@@ -20,11 +20,16 @@ const connectToDB = async () => {
   }
 };
 
-const getConnection = () => {
+const getDb = () => {
   return clientConnection.db(process.env.DB_NAME);
+};
+
+const getMongoClient = () => {
+  return clientConnection;
 };
 
 module.exports = {
   connectToDB,
-  getConnection,
+  getDb,
+  getMongoClient,
 };
