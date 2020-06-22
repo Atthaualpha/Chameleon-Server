@@ -22,11 +22,11 @@ const dbName = 'cham-tree';
 
 process.env.DB_NAME = dbName;
 
-const dev_local_db = `mongodb://localhost:27017/${dbName}?retryWrites=true&w=majority`;
-const dev_atlas_db = `mongodb+srv://${properties.user}:${properties.pass}@clusterattha-b1ery.mongodb.net/${dbName}?retryWrites=true&w=majority`;
+const devLocalDb = `mongodb://localhost:27017/${dbName}?retryWrites=true&w=majority`;
+const devAtlasDb = `mongodb+srv://${properties.user}:${properties.pass}@clusterattha-b1ery.mongodb.net/${dbName}?retryWrites=true&w=majority`;
 
 if (process.env.NODE_ENV === 'dev') {
-  urlDB = dev_atlas_db;
+  urlDB = devAtlasDb;
 } else {
   urlDB = process.env.MONGO_URL;
 }
