@@ -55,7 +55,6 @@ class MockRequest {
         .find({ projectId: new ObjectId(projectId) });
 
       await cursor.forEach((doc) => {
-        console.log(doc);
         requestMocks.push(doc);
       });
 
