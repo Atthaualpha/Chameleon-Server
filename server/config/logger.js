@@ -13,8 +13,8 @@ const levels = {
 const colors = {
   error: 'red',
   warn: 'yellow',
-  info: 'blue',
-  debug: 'green',
+  info: 'cyan',
+  debug: 'magenta',
 };
 
 const colorizer = format.colorize({ colors });
