@@ -42,10 +42,7 @@ class MockRequest {
         await fileHandler.createResponseFile(
           projectId,
           requestDoc.id,
-          responseBody,
-          (err) => {
-            throw new Error(err);
-          }
+          responseBody
         );
       }
 
