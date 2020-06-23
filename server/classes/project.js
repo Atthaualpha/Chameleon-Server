@@ -25,7 +25,7 @@ class Project {
       };
 
       fileHandler
-        .createDirResponse(project.id)
+        .createDirResponse(project.id.toString())
         .catch(() => logger.warn('Error creating project Dir'));
 
       callback(null, project);

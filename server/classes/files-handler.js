@@ -6,20 +6,29 @@ const path = require('path');
 const _basePath = path.resolve(__dirname, '../archive');
 
 /**
- *
- * @param {String} projectId
+ * Build the path to a file or directory
+ * @param  {...any} paths
+ * @return String with the path of given arguments
  */
-const createDirResponse = (projectId) => {
-  return fsPromises.mkdir(_basePath + '/' + projectId, { recursive: true });
+const buildPath = (...args) => {
+  return path.join(...args);
 };
 
 /**
  *
  * @param {String} projectId
+ */
+const createDirResponse = (projectId) => {
+  return fsPromises.mkdir(buildPath(_basePath, projectId), { recursive: true });
+};
+
+/**
+ * Check if a file or dir exists
+ * @param {String} projectId
  * @returns Boolean flag true if is a dir, otherwise false
  */
-const checkDirExists = (projectId) => {
-  return fs.existsSync(_basePath + '/' + projectId);
+const checkExists = (path) => {
+  return fs.existsSync(path);
 };
 
 /**
@@ -29,8 +38,7 @@ const checkDirExists = (projectId) => {
  * @param {JSON} responseData
  */
 const writeResponseFile = (projectId, requestId, responseData) => {
-  let filePath = _basePath + '/' + projectId + '/' + requestId + '.json';
-
+  const filePath = buildPath(_basePath, projectId, requestId) + '.json';
   return fsPromises.writeFile(filePath, JSON.stringify(responseData));
 };
 
@@ -41,7 +49,7 @@ const writeResponseFile = (projectId, requestId, responseData) => {
  * @param {JSON} responseData
  */
 const createResponseFile = async (projectId, requestId, responseData) => {
-  if (!checkDirExists(projectId)) {
+  if (!checkExists(buildPath(_basePath, projectId))) {
     logger.warn('Project dir response not found, creating again');
     await createDirResponse(projectId);
   }
@@ -49,7 +57,22 @@ const createResponseFile = async (projectId, requestId, responseData) => {
   await writeResponseFile(projectId, requestId, responseData);
 };
 
+/**
+ * Load the response file and return its content
+ * @param {String} projectId
+ * @param {String} requestId
+ */
+const loadResponseFile = async (projectId, requestId) => {
+  const filePath = buildPath(_basePath, projectId, requestId) + '.json';
+  if (checkExists(filePath)) {
+    return JSON.parse(
+      await fsPromises.readFile(filePath, { encoding: 'utf8' })
+    );
+  }
+};
+
 module.exports = {
   createResponseFile,
   createDirResponse,
+  loadResponseFile,
 };

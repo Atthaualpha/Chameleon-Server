@@ -41,7 +41,7 @@ class MockRequest {
       if (hasResponse) {
         await fileHandler.createResponseFile(
           projectId,
-          requestDoc.id,
+          requestDoc.id.toString(),
           responseBody
         );
       }
@@ -70,7 +70,10 @@ class MockRequest {
       let cursor = await cnn
         .getDb()
         .collection(collection)
-        .find({ projectId: new mongo.ObjectID(projectId) });
+        .find(
+          { projectId: new mongo.ObjectID(projectId) },
+          { projection: { name: 1, url: 1, status: 1, restMethod: 1 } }
+        );
 
       await cursor.forEach((doc) => {
         requestMocks.push(doc);
@@ -95,10 +98,20 @@ class MockRequest {
    */
   async findRequest(requestId, callback) {
     try {
-      let result = await cnn
+      let responseBody;
+      let { hasResponse, ...result } = await cnn
         .getDb()
         .collection(collection)
         .findOne({ _id: new mongo.ObjectID(requestId) });
+
+      if (hasResponse) {
+        responseBody = await fileHandler.loadResponseFile(
+          result.projectId.toString(),
+          requestId
+        );
+      }
+
+      result.responseBody = responseBody;
 
       callback(null, result);
     } catch (err) {
