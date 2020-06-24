@@ -97,8 +97,8 @@ class MockRequest {
    * @returns request found, undefined when not exists
    */
   async findRequest(requestId, callback) {
+    let responseBody;
     try {
-      let responseBody;
       let { hasResponse, ...result } = await cnn
         .getDb()
         .collection(collection)

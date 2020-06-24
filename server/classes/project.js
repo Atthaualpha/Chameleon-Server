@@ -3,6 +3,8 @@ const mongo = require('mongodb');
 const logger = require('../config/logger');
 const fileHandler = require('./files-handler');
 
+const collection = 'project';
+
 class Project {
   #projectId;
   #name;
@@ -12,16 +14,15 @@ class Project {
    * @param {String} name
    * @param {function} callback
    */
-  async createProject(name, callback) {
+  async createProject(projectDoc, callback) {
     try {
       let response = await cnn
         .getDb()
-        .collection('project')
-        .insertOne({ name, dateCreated: new Date() });
+        .collection(collection)
+        .insertOne({ ...projectDoc, dateCreated: new Date() });
 
       let project = {
         id: response.insertedId,
-        name,
       };
 
       fileHandler
@@ -43,7 +44,7 @@ class Project {
     try {
       let project = await cnn
         .getDb()
-        .collection('project')
+        .collection(collection)
         .findOne({ _id: new mongo.ObjectID(projectId) });
 
       callback(null, project);
@@ -53,19 +54,24 @@ class Project {
     }
   }
 
+  /**
+   *
+   * @param {String} name
+   * @param {Function} callback
+   */
   async findProjectsByName(name, callback) {
     try {
       let cursor;
       let projects = [];
 
       if (name) {
-        cursor = cnn
+        cursor = await cnn
           .getDb()
-          .collection('project')
+          .collection(collection)
           .find({ name: { $regex: name, $options: 'i' } })
           .sort({ name: 1 });
       } else {
-        cursor = cnn.getDb().collection('project').find({}).sort({ name: 1 });
+        cursor = cnn.getDb().collection(collection).find({}).sort({ name: 1 });
       }
 
       await cursor.forEach((doc) => {
@@ -85,6 +91,49 @@ class Project {
       callback(null, response);
     } catch (err) {
       logger.error(err);
+      callback(err);
+    }
+  }
+
+  /**
+   *
+   * @param {String} projectId
+   * @param {JSON} projectDoc
+   * @return The project updated
+   */
+  async updateProject(projectId, projectDoc, callback) {
+    try {
+      let result = await cnn
+        .getDb()
+        .collection(collection)
+        .findOneAndUpdate(
+          { _id: new mongo.ObjectID(projectId) },
+          { $set: { name: projectDoc.name } },
+          { returnOriginal: false }
+        );
+
+      callback(null, result.value);
+    } catch (err) {
+      logger.error(err);
+      callback(err);
+    }
+  }
+
+  /**
+   *
+   * @param {String} projectId
+   * @param {Function} callback
+   */
+  async deleteProject(projectId, callback) {
+    try {
+      let result = await cnn
+        .getDb()
+        .collection(collection)
+        .findOneAndDelete({ _id: new mongo.ObjectID(projectId) });
+
+      callback(null, result.value);
+    } catch (err) {
+      logger.err(err);
       callback(err);
     }
   }
