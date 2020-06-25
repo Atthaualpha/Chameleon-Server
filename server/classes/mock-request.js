@@ -119,6 +119,88 @@ class MockRequest {
       callback(err);
     }
   }
+
+  /**
+   *
+   * @param {String} requestId
+   * @param {JSON} requestDoc
+   * @param {Function} callback
+   */
+  async updateRequest(requestId, requestMock, callback) {
+    const session = mongoClient.startSession();
+    try {
+      session.startTransaction();
+      let hasResponse = false;
+      let { responseBody, ...remainRequest } = requestMock;
+      if (!_.isEmpty(responseBody)) {
+        hasResponse = true;
+      }
+
+      remainRequest.hasResponse = hasResponse;
+      let { value: result } = await cnn
+        .getDb()
+        .collection(collection)
+        .findOneAndUpdate(
+          { _id: new mongo.ObjectID(requestId) },
+          { $set: { ...remainRequest } },
+          { session, returnOriginal: true }
+        );
+
+      await fileHandler.upsertFile(
+        result.hasResponse,
+        hasResponse,
+        result.projectId.toString(),
+        requestId,
+        responseBody
+      );
+
+      callback(null, result);
+      await session.commitTransaction();
+    } catch (err) {
+      await session.abortTransaction();
+      logger.error(err);
+      callback(err);
+    } finally {
+      session.endSession();
+    }
+  }
+
+  /**
+   * Delete one or many request
+   * @param {Array} requestsIds
+   * @param {Function} callback
+   */
+  async deleteRequests(projectId, requestsIds, callback) {
+    if (_.isEmpty(requestsIds)) {
+      return callback(null, 0);
+    }
+
+    const session = mongoClient.startSession();
+
+    try {
+      session.startTransaction();
+
+      let dbRequestIds = requestsIds.map((req) => {
+        return new mongo.ObjectID(req);
+      });
+
+      let { deletedCount } = await cnn
+        .getDb()
+        .collection(collection)
+        .deleteMany({ _id: { $in: dbRequestIds } });
+
+      fileHandler.deleteManyFiles(projectId, requestsIds);
+
+      callback(null, deletedCount);
+      await session.commitTransaction();
+    } catch (err) {
+      await session.abortTransaction();
+      logger.error(err);
+      callback(err);
+    } finally {
+      session.endSession();
+    }
+  }
 }
 
 module.exports = MockRequest;

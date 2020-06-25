@@ -19,7 +19,9 @@ const buildPath = (...args) => {
  * @param {String} projectId
  */
 const createDirResponse = (projectId) => {
-  return fsPromises.mkdir(buildPath(_basePath, projectId), { recursive: true });
+  return fsPromises.mkdir(buildPath(_basePath, projectId), {
+    recursive: true,
+  });
 };
 
 /**
@@ -71,8 +73,54 @@ const loadResponseFile = async (projectId, requestId) => {
   }
 };
 
+/**
+ *
+ * @param {String} projectId
+ * @param {String} requestId
+ * @param {JSON} responseData
+ */
+const deleteFile = (projectId, requestId) => {
+  return fsPromises.unlink(
+    buildPath(_basePath, projectId, requestId) + '.json'
+  );
+};
+
+/**
+ *
+ * @param {String} projectId
+ * @param {Array} requestIds
+ */
+const deleteManyFiles = (projectId, requestIds) => {
+  requestIds.forEach(async (requestId) => {
+    await deleteFile(projectId, requestId);
+  });
+};
+
+/**
+ *
+ * @param {Boolean} hadFile indicate if request had file
+ * @param {Boolean} hasFile indicate if request now has file
+ */
+const upsertFile = async (
+  hadFile,
+  hasFile,
+  projectId,
+  requestId,
+  responseData
+) => {
+  if (hasFile) {
+    // create or rewrite file
+    await createResponseFile(projectId, requestId, responseData);
+  } else if (hadFile) {
+    await deleteFile(projectId, requestId);
+  }
+};
+
 module.exports = {
   createResponseFile,
   createDirResponse,
   loadResponseFile,
+  upsertFile,
+  deleteFile,
+  deleteManyFiles,
 };
