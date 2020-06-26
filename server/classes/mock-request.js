@@ -2,7 +2,7 @@ const cnn = require('../config/dbConfig');
 const mongoClient = require('../config/dbConfig').getMongoClient();
 const mongo = require('mongodb');
 const logger = require('../config/logger');
-const fileHandler = require('./files-handler');
+const fh = require('./files-handler');
 const _ = require('lodash');
 
 const collection = 'request';
@@ -39,9 +39,9 @@ class MockRequest {
       };
 
       if (hasResponse) {
-        await fileHandler.createResponseFile(
-          projectId,
-          requestDoc.id.toString(),
+        await fh.createResponseFile(
+          fh.buildPath([fh._basePathArchive, projectId]),
+          buildPath([requestDoc.id.toString()], '.json'),
           responseBody
         );
       }
@@ -105,9 +105,11 @@ class MockRequest {
         .findOne({ _id: new mongo.ObjectID(requestId) });
 
       if (hasResponse) {
-        responseBody = await fileHandler.loadResponseFile(
-          result.projectId.toString(),
-          requestId
+        responseBody = await fh.loadResponseFile(
+          fh.buildPath(
+            [fh._basePathArchive, result.projectId.toString(), requestId],
+            '.json'
+          )
         );
       }
 
@@ -146,11 +148,11 @@ class MockRequest {
           { session, returnOriginal: true }
         );
 
-      await fileHandler.upsertFile(
+      await fh.upsertFile(
         result.hasResponse,
         hasResponse,
-        result.projectId.toString(),
-        requestId,
+        fh.buildPath([fh._basePathArchive, result.projectId.toString()]),
+        fh.buildPath([requestId], '.json'),
         responseBody
       );
 
@@ -189,7 +191,10 @@ class MockRequest {
         .collection(collection)
         .deleteMany({ _id: { $in: dbRequestIds } });
 
-      fileHandler.deleteManyFiles(projectId, requestsIds);
+      fh.deleteManyFiles(
+        fh.buildPath([fh._basePathArchive, projectId]),
+        requestsIds.map((req) => req + '.json')
+      );
 
       callback(null, deletedCount);
       await session.commitTransaction();

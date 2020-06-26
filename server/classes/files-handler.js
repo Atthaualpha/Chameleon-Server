@@ -2,31 +2,33 @@ const fs = require('fs');
 const fsPromises = fs.promises;
 const logger = require('../config/logger');
 const path = require('path');
+const _ = require('lodash');
 
-const _basePath = path.resolve(__dirname, '../archive');
+const _basePathArchive = path.resolve(__dirname, '../archive');
 
 /**
- * Build the path to a file or directory
- * @param  {...any} paths
- * @return String with the path of given arguments
+ *
+ * @param  {Array} path
+ * @param  {String} ext
  */
-const buildPath = (...args) => {
-  return path.join(...args);
+const buildPath = (paths, ext) => {
+  logger.info(path.join(...paths) + (ext || ''));
+  return path.join(...paths) + (ext || '');
 };
 
 /**
  *
- * @param {String} projectId
+ * @param {String} pathDir
  */
-const createDirResponse = (projectId) => {
-  return fsPromises.mkdir(buildPath(_basePath, projectId), {
+const createDirResponse = (pathDir) => {
+  return fsPromises.mkdir(pathDir, {
     recursive: true,
   });
 };
 
 /**
  * Check if a file or dir exists
- * @param {String} projectId
+ * @param {String} path
  * @returns Boolean flag true if is a dir, otherwise false
  */
 const checkExists = (path) => {
@@ -35,41 +37,35 @@ const checkExists = (path) => {
 
 /**
  *
- * @param {String} path
- * @param {String} requestId
+ * @param {String} pathFile
  * @param {JSON} responseData
  */
-const writeResponseFile = (projectId, requestId, responseData) => {
-  const filePath = buildPath(_basePath, projectId, requestId) + '.json';
-  return fsPromises.writeFile(filePath, JSON.stringify(responseData));
+const writeResponseFile = (pathFile, responseData) => {
+  return fsPromises.writeFile(pathFile, JSON.stringify(responseData));
 };
 
 /**
  *
- * @param {String} projectId
- * @param {String} requestId
+ * @param {String} pathDir
+ * @param {String} fileName
  * @param {JSON} responseData
  */
-const createResponseFile = async (projectId, requestId, responseData) => {
-  if (!checkExists(buildPath(_basePath, projectId))) {
+const createResponseFile = async (pathDir, fileName, responseData) => {
+  if (!checkExists(pathDir)) {
     logger.warn('Project dir response not found, creating again');
-    await createDirResponse(projectId);
+    await createDirResponse(pathDir);
   }
 
-  await writeResponseFile(projectId, requestId, responseData);
+  await writeResponseFile(path.join(pathDir, fileName), responseData);
 };
 
 /**
- * Load the response file and return its content
- * @param {String} projectId
- * @param {String} requestId
+ *
+ * @param {String} path
  */
-const loadResponseFile = async (projectId, requestId) => {
-  const filePath = buildPath(_basePath, projectId, requestId) + '.json';
-  if (checkExists(filePath)) {
-    return JSON.parse(
-      await fsPromises.readFile(filePath, { encoding: 'utf8' })
-    );
+const loadResponseFile = async (path) => {
+  if (checkExists(path)) {
+    return JSON.parse(await fsPromises.readFile(path, { encoding: 'utf8' }));
   }
 };
 
@@ -79,48 +75,78 @@ const loadResponseFile = async (projectId, requestId) => {
  * @param {String} requestId
  * @param {JSON} responseData
  */
-const deleteFile = (projectId, requestId) => {
-  return fsPromises.unlink(
-    buildPath(_basePath, projectId, requestId) + '.json'
-  );
+const deleteFile = (filePath) => {
+  return fsPromises.unlink(filePath);
 };
 
 /**
  *
- * @param {String} projectId
- * @param {Array} requestIds
+ * @param {String} pathDir
+ * @param {Array} fileNames
  */
-const deleteManyFiles = (projectId, requestIds) => {
-  requestIds.forEach(async (requestId) => {
-    await deleteFile(projectId, requestId);
+const deleteManyFiles = (pathDir, fileNames) => {
+  fileNames.forEach(async (fileName) => {
+    await deleteFile(path.join(pathDir, fileName));
   });
 };
 
 /**
  *
- * @param {Boolean} hadFile indicate if request had file
- * @param {Boolean} hasFile indicate if request now has file
+ * @param {String} pathDir
+ */
+const removeDirectory = async (pathDir) => {
+  await deleteFilesFromDirectory(pathDir);
+  return fsPromises.rmdir(pathDir);
+};
+
+/**
+ *
+ * @param {String} pathDir
+ */
+const deleteFilesFromDirectory = async (pathDir) => {
+  let fileNames = await readFileFromDirectory(pathDir);
+  deleteManyFiles(pathDir, fileNames);
+};
+
+/**
+ *
+ * @param {String} pathDir
+ */
+const readFileFromDirectory = (pathDir) => {
+  return fsPromises.readdir(pathDir);
+};
+
+/**
+ *
+ * @param {String} hadFile
+ * @param {String} hasFile
+ * @param {String} pathDir
+ * @param {String} fileName
+ * @param {JSON} responseData
  */
 const upsertFile = async (
   hadFile,
   hasFile,
-  projectId,
-  requestId,
+  pathDir,
+  fileName,
   responseData
 ) => {
   if (hasFile) {
     // create or rewrite file
-    await createResponseFile(projectId, requestId, responseData);
+    await createResponseFile(pathDir, fileName, responseData);
   } else if (hadFile) {
-    await deleteFile(projectId, requestId);
+    await deleteFile(path.join(pathDir, fileName));
   }
 };
 
 module.exports = {
+  buildPath,
   createResponseFile,
   createDirResponse,
   loadResponseFile,
   upsertFile,
   deleteFile,
   deleteManyFiles,
+  removeDirectory,
+  _basePathArchive,
 };

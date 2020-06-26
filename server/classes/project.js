@@ -1,7 +1,7 @@
 const cnn = require('../config/dbConfig');
 const mongo = require('mongodb');
 const logger = require('../config/logger');
-const fileHandler = require('./files-handler');
+const fh = require('./files-handler');
 
 const collection = 'project';
 
@@ -25,9 +25,9 @@ class Project {
         id: response.insertedId,
       };
 
-      fileHandler
-        .createDirResponse(project.id.toString())
-        .catch(() => logger.warn('Error creating project Dir'));
+      fh.createDirResponse(
+        fh.buildPath([fh._basePathArchive, project.id.toString()])
+      ).catch(() => logger.warn('Error creating project Dir'));
 
       callback(null, project);
     } catch (err) {
@@ -120,7 +120,7 @@ class Project {
   }
 
   /**
-   *
+   * Delete a project and all request related to it
    * @param {String} projectId
    * @param {Function} callback
    */
@@ -131,9 +131,15 @@ class Project {
         .collection(collection)
         .findOneAndDelete({ _id: new mongo.ObjectID(projectId) });
 
+      await cnn
+        .getDb()
+        .collection('request')
+        .deleteMany({ projectId: new mongo.ObjectID(projectId) });
+
+      fh.removeDirectory(fh.buildPath([fh._basePathArchive, projectId]));
       callback(null, result.value);
     } catch (err) {
-      logger.err(err);
+      logger.error(err);
       callback(err);
     }
   }
