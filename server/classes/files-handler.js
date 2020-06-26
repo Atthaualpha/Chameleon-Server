@@ -71,6 +71,14 @@ const loadResponseFile = async (path) => {
 
 /**
  *
+ * @param {String} pathDir
+ */
+const readFileFromDirectory = (pathDir) => {
+  return fsPromises.readdir(pathDir);
+};
+
+/**
+ *
  * @param {String} projectId
  * @param {String} requestId
  * @param {JSON} responseData
@@ -94,15 +102,6 @@ const deleteManyFiles = (pathDir, fileNames) => {
  *
  * @param {String} pathDir
  */
-const removeDirectory = async (pathDir) => {
-  await deleteFilesFromDirectory(pathDir);
-  return fsPromises.rmdir(pathDir);
-};
-
-/**
- *
- * @param {String} pathDir
- */
 const deleteFilesFromDirectory = async (pathDir) => {
   let fileNames = await readFileFromDirectory(pathDir);
   deleteManyFiles(pathDir, fileNames);
@@ -112,8 +111,9 @@ const deleteFilesFromDirectory = async (pathDir) => {
  *
  * @param {String} pathDir
  */
-const readFileFromDirectory = (pathDir) => {
-  return fsPromises.readdir(pathDir);
+const removeDirectory = async (pathDir) => {
+  await deleteFilesFromDirectory(pathDir);
+  return fsPromises.rmdir(pathDir);
 };
 
 /**

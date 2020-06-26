@@ -41,7 +41,7 @@ class MockRequest {
       if (hasResponse) {
         await fh.createResponseFile(
           fh.buildPath([fh._basePathArchive, projectId]),
-          buildPath([requestDoc.id.toString()], '.json'),
+          fh.buildPath([requestDoc.id.toString()], '.json'),
           responseBody
         );
       }
