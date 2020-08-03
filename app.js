@@ -16,6 +16,15 @@ require('./server/config/dbConfig').connectToDB();
 //routes
 app.use(require('./server/router/router'));
 
+app.use((err, req, res, next) => {
+  res.status(500).json({
+    completed: false,
+    response: {
+      message: err.stack ? 'An error has ocurred' : err,
+    },
+  });
+});
+
 app.set('port', process.env.SERVER_PORT);
 
 app.listen(app.get('port'), (server) => {

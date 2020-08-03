@@ -18,13 +18,14 @@
   },
   "homepage": "https://github.com/Atthaualpha/Chameleon-Server#readme",
   "dependencies": {
+    "ajv": "^6.12.2",
     "express": "^4.17.1",
     "lodash": "^4.17.15",
     "moment": "^2.27.0",
     "mongodb": "^3.5.9",
     "winston": "^3.3.0"
   },
-  "devDependencies": {    
+  "devDependencies": {
     "morgan": "^1.10.0"
   }
 }

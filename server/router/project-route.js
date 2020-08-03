@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Project = require('../classes/project');
+const { validateProjectCreation } = require('../middlewares/project');
 
 let project = new Project();
 
@@ -49,7 +50,7 @@ router.get('/', (req, res) => {
   });
 });
 
-router.post('/', (req, res) => {
+router.post('/', validateProjectCreation, (req, res, next) => {
   project.createProject(req.body, (err, projectCreated) => {
     if (err) {
       return res.status(500).json({
