@@ -76,6 +76,8 @@ class MockRequest {
         );
 
       await cursor.forEach((doc) => {
+        doc.id = doc._id;
+        delete doc._id;
         requestMocks.push(doc);
       });
 
@@ -114,7 +116,8 @@ class MockRequest {
       }
 
       result.responseBody = responseBody;
-
+      result.id = result._id;
+      delete result._id;
       callback(null, result);
     } catch (err) {
       logger.error(err);
