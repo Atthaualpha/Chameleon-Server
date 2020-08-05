@@ -72,12 +72,10 @@ class MockRequest {
         .collection(collection)
         .find(
           { projectId: new mongo.ObjectID(projectId) },
-          { projection: { name: 1, url: 1, status: 1, restMethod: 1 } }
+          { projection: { name: 1, url: 1, status: 1, method: 1 } }
         );
 
       await cursor.forEach((doc) => {
-        doc.id = doc._id;
-        delete doc._id;
         requestMocks.push(doc);
       });
 
@@ -101,23 +99,23 @@ class MockRequest {
   async findRequest(requestId, callback) {
     let responseBody;
     try {
-      let { hasResponse, ...result } = await cnn
+      let result = await cnn
         .getDb()
         .collection(collection)
         .findOne({ _id: new mongo.ObjectID(requestId) });
 
-      if (hasResponse) {
-        responseBody = await fh.loadResponseFile(
-          fh.buildPath(
-            [fh._basePathArchive, result.projectId.toString(), requestId],
-            '.json'
-          )
-        );
+      if (result) {
+        if (result.hasResponse) {
+          responseBody = await fh.loadResponseFile(
+            fh.buildPath(
+              [fh._basePathArchive, result.projectId.toString(), requestId],
+              '.json'
+            )
+          );
+        }
+        result.responseBody = responseBody;
       }
 
-      result.responseBody = responseBody;
-      result.id = result._id;
-      delete result._id;
       callback(null, result);
     } catch (err) {
       logger.error(err);
@@ -136,7 +134,7 @@ class MockRequest {
     try {
       session.startTransaction();
       let hasResponse = false;
-      let { responseBody, ...remainRequest } = requestMock;
+      let { responseBody, _id, projectId, ...remainRequest } = requestMock;
       if (!_.isEmpty(responseBody)) {
         hasResponse = true;
       }

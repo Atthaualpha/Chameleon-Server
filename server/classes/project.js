@@ -76,7 +76,7 @@ class Project {
 
       await cursor.forEach((doc) => {
         let project = {
-          id: doc._id,
+          _id: doc._id,
           name: doc.name,
           dateCreated: doc.dateCreated,
         };
