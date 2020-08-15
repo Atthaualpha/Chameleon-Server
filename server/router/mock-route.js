@@ -16,7 +16,7 @@ router.all(/mocker\/\w+\/.+/, (req, res) => {
     url,
     req.query,
     req.headers,
-    (err, result) => {
+    async (err, result) => {
       if (err) {
         return res.status(404).json({
           response: {

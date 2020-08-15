@@ -123,6 +123,22 @@ class MockRequest {
     }
   }
 
+  async findProjectIdByRequestId(requestId, callback) {
+    try {
+      let result = await cnn
+        .getDb()
+        .collection(collection)
+        .findOne(
+          { _id: new mongo.ObjectID(requestId) },
+          { projection: { projectId: 1 } }
+        );
+       callback(null, result.projectId.toString()) 
+    } catch (err) {
+      logger.error(err);
+      callback(err);
+    }
+  }
+
   /**
    *
    * @param {String} requestId

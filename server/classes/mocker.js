@@ -15,11 +15,64 @@ class Mocker {
     headers,
     callback
   ) {
-    const queryKeys = Object.keys(queryParams);
-    const queries = Object.entries(queryParams).map(([key, value]) => {
-      return { key, value };
-    });
-    await cnn
+    console.log(url)
+    try {
+      await this.findMockRequest(
+        projectId,
+        method,
+        url,
+        queryParams,
+        headers
+      ).toArray(async (err, result) => {
+        if (err) {
+          logger.error(err);
+          return callback(err);
+        }
+
+        if (!result || _.isEmpty(result)) {
+          return callback('Mock not found');
+        }
+        const requestMock = result[0];
+        let response = {
+          status: requestMock.status,
+          responseHeaders: requestMock.responseHeaders,
+        };
+
+        let responseBody = {};
+        if (requestMock.hasResponse) {
+          responseBody = await fh.loadResponseFile(
+            fh.buildPath(
+              [fh._basePathArchive, projectId, requestMock._id.toString()],
+              '.json'
+            )
+          );
+        }
+        response.responseBody = responseBody;
+
+        callback(null, response);
+      });
+    } catch (err) {
+      logger.error(err);
+      callback(err);
+    }
+  }
+
+  findMockRequest(projectId, method, url, queryParams, headers) {
+    let queryKeys;
+    let queries;
+    if (_.isArray(queryParams)) {
+      queryKeys = queryParams.map((query) => {
+        return query.key;
+      });
+      queries = queryParams;
+    } else {
+      queryKeys = Object.keys(queryParams);
+      queries = Object.entries(queryParams).map(([key, value]) => {
+        return { key, value };
+      });
+    }
+
+    return cnn
       .getDb()
       .collection(collection)
       .aggregate([
@@ -83,34 +136,6 @@ class Mocker {
                   },
                 ],
               },
-              {
-                $or: [
-                  {
-                    $and: [
-                      {
-                        exactHeaders: true,
-                      },
-                      {
-                        $expr: {
-                          $setEquals: ['$headers', []],
-                        },
-                      },
-                    ],
-                  },
-                  {
-                    $and: [
-                      {
-                        exactHeaders: false,
-                      },
-                      {
-                        $expr: {
-                          $setEquals: ['$headers.key', []],
-                        },
-                      },
-                    ],
-                  },
-                ],
-              },
             ],
           },
         },
@@ -122,36 +147,7 @@ class Mocker {
             hasResponse: 1,
           },
         },
-      ])
-      .toArray(async (err, result) => {
-        if (err) {
-          return callback(err);
-        }
-
-        if (!result || _.isEmpty(result)) {
-          return callback('Mock not found');
-        }
-        const requestMock = result[0];
-        console.log(requestMock)
-        let response = {
-          status: requestMock.status,
-          responseHeaders: requestMock.responseHeaders,
-        };
-
-        let responseBody = {}
-        if (requestMock.hasResponse) {
-          responseBody = await fh.loadResponseFile(
-            fh.buildPath(
-              [fh._basePathArchive, projectId, requestMock._id.toString()],
-              '.json'
-            )
-          );          
-        }
-        response.responseBody = responseBody;
-        
-
-        callback(null, response);
-      });
+      ]);
   }
 }
 
