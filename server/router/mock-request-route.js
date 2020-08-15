@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const MockRequest = require('../classes/mock-request');
-const { request } = require('express');
+const {
+  validateRequestCreation,
+  validateRequestUpdate,
+} = require('../middlewares/mock-request');
 
 let mockRequest = new MockRequest();
 
@@ -41,7 +44,7 @@ router.get('/all/:projectId', (req, res) => {
   });
 });
 
-router.post('/:projectId', (req, res) => {
+router.post('/:projectId', [validateRequestCreation], (req, res, next) => {
   mockRequest.createRequest(
     req.params.projectId,
     req.body,
@@ -63,7 +66,7 @@ router.post('/:projectId', (req, res) => {
   );
 });
 
-router.put('/:id', (req, res) => {
+router.put('/:id', [validateRequestUpdate], (req, res) => {
   mockRequest.updateRequest(req.params.id, req.body, (err, requestDoc) => {
     if (err) {
       return res.status(500).json({
