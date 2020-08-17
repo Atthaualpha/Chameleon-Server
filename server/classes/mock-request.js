@@ -58,22 +58,21 @@ class MockRequest {
   }
 
   /**
-   *
+   * Search all request by project id and those who match the given criteria
    * @param {String} projectId
+   * @param {Object} criteria
    * @param {Function} callback
    * @returns requests found, also cotains the count of documents found, empty when not found any
    */
-  async findAllRequest(projectId, callback) {
+  async findAllRequest(projectId, criteria, callback) {
     let requestMocks = [];
 
     try {
+      const query = this.buildFindRequestQuery(projectId, criteria);
       let cursor = await cnn
         .getDb()
         .collection(collection)
-        .find(
-          { projectId: new mongo.ObjectID(projectId) },
-          { projection: { name: 1, url: 1, status: 1, method: 1 } }
-        );
+        .find(query, { projection: { name: 1, url: 1, status: 1, method: 1 } });
 
       await cursor.forEach((doc) => {
         requestMocks.push(doc);
@@ -89,6 +88,27 @@ class MockRequest {
       logger.error(err);
       callback(err);
     }
+  }
+
+  buildFindRequestQuery(projectId, criteria) {
+    let query = {
+      projectId: new mongo.ObjectID(projectId),
+    };
+    if (!_.isEmpty(criteria.name)) {
+      criteria.name = criteria.name.replace('?','\\?')
+      query.$or = [
+        { name: new RegExp(criteria.name, 'i') },
+        { url: new RegExp(criteria.name, 'i') },
+      ];
+    }
+    if (criteria.status) {
+      query.status = +criteria.status;
+    }
+    if (!_.isEmpty(criteria.method)) {
+      query.method = criteria.method;
+    }
+
+    return query;
   }
 
   /**
@@ -132,7 +152,7 @@ class MockRequest {
           { _id: new mongo.ObjectID(requestId) },
           { projection: { projectId: 1 } }
         );
-       callback(null, result.projectId.toString()) 
+      callback(null, result.projectId.toString());
     } catch (err) {
       logger.error(err);
       callback(err);
