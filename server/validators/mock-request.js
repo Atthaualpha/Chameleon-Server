@@ -34,7 +34,8 @@ const validateDuplicateRequest = async (
         request.method,
         url,
         request.queryParams,
-        request.headers
+        request.headers,
+        true
       ).toArray(async (err, result) => {
         if (err) {
           return callback(err);

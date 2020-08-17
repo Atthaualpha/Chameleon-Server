@@ -15,14 +15,15 @@ class Mocker {
     headers,
     callback
   ) {
-    console.log(url)
+    console.log(url);
     try {
       await this.findMockRequest(
         projectId,
         method,
         url,
         queryParams,
-        headers
+        headers,
+        false
       ).toArray(async (err, result) => {
         if (err) {
           logger.error(err);
@@ -57,7 +58,14 @@ class Mocker {
     }
   }
 
-  findMockRequest(projectId, method, url, queryParams, headers) {
+  findMockRequest(
+    projectId,
+    method,
+    url,
+    queryParams,
+    headers,
+    validateDuplicate
+  ) {
     let queryKeys;
     let queries;
     if (_.isArray(queryParams)) {
@@ -71,83 +79,143 @@ class Mocker {
         return { key, value };
       });
     }
+    let query = null;
+    if (validateDuplicate) {
+      query = this.duplicateMockRequestQuery(projectId, method, url,queries, headers);
+    } else {
+      query = this.findMockRequestQuery(projectId, method, url, queryKeys,queries, headers);
+    }
 
-    return cnn
-      .getDb()
-      .collection(collection)
-      .aggregate([
-        {
-          $match: {
-            method: method,
-            url: new RegExp(url, 'i'),
-            projectId: new mongo.ObjectID(projectId),
-          },
+    return cnn.getDb().collection(collection).aggregate(query);
+  }
+
+  findMockRequestQuery(projectId, method, url, queryKeys,queries, headers) {
+    return [
+      {
+        $match: {
+          method: method,
+          url: new RegExp(url, 'i'),
+          projectId: new mongo.ObjectID(projectId),
         },
-        {
-          $match: {
-            $expr: {
-              $ne: [
-                {
-                  $regexFindAll: {
-                    input: {
-                      $arrayElemAt: [
-                        {
-                          $split: ['$url', '?'],
-                        },
-                        0,
-                      ],
-                    },
-                    regex: new RegExp(url, 'i'),
-                  },
-                },
-                [],
-              ],
-            },
-          },
-        },
-        {
-          $match: {
-            $and: [
+      },
+      {
+        $match: {
+          $expr: {
+            $ne: [
               {
-                $or: [
-                  {
-                    $and: [
+                $regexFindAll: {
+                  input: {
+                    $arrayElemAt: [
                       {
-                        exactQuery: true,
+                        $split: ['$url', '?'],
                       },
-                      {
-                        $expr: {
-                          $setEquals: ['$queryParams', queries],
-                        },
-                      },
+                      0,
                     ],
                   },
-                  {
-                    $and: [
-                      {
-                        exactQuery: false,
-                      },
-                      {
-                        $expr: {
-                          $setEquals: ['$queryParams.key', queryKeys],
-                        },
-                      },
-                    ],
-                  },
-                ],
+                  regex: new RegExp(url, 'i'),
+                },
               },
+              [],
             ],
           },
         },
-        {
-          $project: {
-            url: 1,
-            status: 1,
-            responseHeaders: 1,
-            hasResponse: 1,
+      },
+      {
+        $match: {
+          $and: [
+            {
+              $or: [
+                {
+                  $and: [
+                    {
+                      exactQuery: true,
+                    },
+                    {
+                      $expr: {
+                        $setEquals: ['$queryParams', queries],
+                      },
+                    },
+                  ],
+                },
+                {
+                  $and: [
+                    {
+                      exactQuery: false,
+                    },
+                    {
+                      $expr: {
+                        $setEquals: ['$queryParams.key', queryKeys],
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+      {
+        $project: {
+          url: 1,
+          status: 1,
+          responseHeaders: 1,
+          hasResponse: 1,
+        },
+      },
+    ];
+  }
+
+  duplicateMockRequestQuery(projectId, method, url, queries, headers) {
+    return [
+      {
+        $match: {
+          method: method,
+          url: new RegExp(url, 'i'),
+          projectId: new mongo.ObjectID(projectId),
+        },
+      },
+      {
+        $match: {
+          $expr: {
+            $ne: [
+              {
+                $regexFindAll: {
+                  input: {
+                    $arrayElemAt: [
+                      {
+                        $split: ['$url', '?'],
+                      },
+                      0,
+                    ],
+                  },
+                  regex: new RegExp(url, 'i'),
+                },
+              },
+              [],
+            ],
           },
         },
-      ]);
+      },
+      {
+        $match: {
+          $and: [
+            {
+              $expr: {
+                $setEquals: ['$queryParams', queries],
+              },
+            },
+          ],
+        },
+      },
+      {
+        $project: {
+          url: 1,
+          status: 1,
+          responseHeaders: 1,
+          hasResponse: 1,
+        },
+      },
+    ];
   }
 }
 
