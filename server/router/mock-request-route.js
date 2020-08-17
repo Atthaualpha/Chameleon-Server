@@ -27,7 +27,7 @@ router.get('/:id', (req, res) => {
 });
 
 router.get('/all/:projectId', (req, res) => {
-  mockRequest.findAllRequest(req.params.projectId, (err, requestDocs) => {
+  mockRequest.findAllRequest(req.params.projectId, req.query, (err, requestDocs) => {
     if (err) {
       return res.status(500).json({
         completed: false,
