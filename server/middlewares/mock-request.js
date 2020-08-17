@@ -11,6 +11,7 @@ const validateRequestGeneric = (err, result, res, next) => {
     return res.status(400).json({
       completed: false,
       response: {
+        cause: "duplicated",
         requestIdDuplicated: result.id,
         message:
           'Request with same url, query params and headers already exists',
