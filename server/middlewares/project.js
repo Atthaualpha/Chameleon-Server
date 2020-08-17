@@ -6,6 +6,7 @@ const validateProjectCreation = (req, res, next) => {
     return res.status(400).json({
       completed: false,
       response: {
+        cause: "nameRequired",
         message: 'Project name is required',
       },
     });
@@ -21,6 +22,7 @@ const validateProjectCreation = (req, res, next) => {
       return res.status(400).json({
         completed: false,
         response: {
+          cause:"duplicated",
           message: 'Project name already exists',
         },
       });

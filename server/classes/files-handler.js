@@ -12,7 +12,6 @@ const _basePathArchive = path.resolve(__dirname, '../archive');
  * @param  {String} ext
  */
 const buildPath = (paths, ext) => {
-  logger.info(path.join(...paths) + (ext || ''));
   return path.join(...paths) + (ext || '');
 };
 
@@ -84,7 +83,9 @@ const readFileFromDirectory = (pathDir) => {
  * @param {JSON} responseData
  */
 const deleteFile = (filePath) => {
-  return fsPromises.unlink(filePath);
+  if(checkExists(filePath)){
+    return fsPromises.unlink(filePath);
+  }  
 };
 
 /**
