@@ -101,7 +101,7 @@ class MockRequest {
         { url: new RegExp(criteria.name, 'i') },
       ];
     }
-    if (criteria.status) {
+    if (!_.isEmpty(criteria.status)) {
       query.status = +criteria.status;
     }
     if (!_.isEmpty(criteria.method)) {
