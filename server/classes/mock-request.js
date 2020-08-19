@@ -45,7 +45,6 @@ class MockRequest {
           responseBody
         );
       }
-
       callback(null, requestDoc);
       await session.commitTransaction();
     } catch (err) {
