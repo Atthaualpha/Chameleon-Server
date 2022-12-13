@@ -19,7 +19,7 @@
   "homepage": "https://github.com/Atthaualpha/Chameleon-Server#readme",
   "dependencies": {
     "ajv": "^6.12.2",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "lodash": "^4.17.19",
     "moment": "^2.27.0",
     "mongodb": "^3.5.9",
